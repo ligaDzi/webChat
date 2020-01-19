@@ -23,6 +23,7 @@ const ChatTabs = ({ user, rooms, closeRoom, sendMessage }) => {
     }, [rooms])
 
     const handleCloseRoom = (roomId) => {
+        tabInstance && tabInstance.destroy()
         closeRoom(roomId)
     }
 
@@ -62,6 +63,8 @@ const ChatTabs = ({ user, rooms, closeRoom, sendMessage }) => {
             </div>
         ))
     )
+
+
     
     useEffect(() => {
         const option = {
@@ -72,7 +75,8 @@ const ChatTabs = ({ user, rooms, closeRoom, sendMessage }) => {
         if (rooms.length > 0 ) {
             setTabInstance(window.M.Tabs.init(tab.current, option))
         }
-    }, [rooms.length])
+    }, [rooms])
+
 
     return (
         <div className='chat-list'>

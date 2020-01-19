@@ -102,16 +102,13 @@ const disconnectUserRoom = async (userId, roomId) => {
             }
         }
 
-        const room = await Room.findById(roomId)
-        room.users = await room.users.filter(id => id != userId)
+        const room = await Room.findById(roomId).populate('users', 'id name email')
+        room.users = await room.users.filter(user => user.id != userId)
         room.save()
-
-        // const user = await User.findById(userId)
-        // user.rooms = await user.rooms.filter(id => id != roomId)
-        // user.save()
         
         return {
-            message: 'Пользователь удален из чат-комнаты'
+            message: 'Пользователь удален из чат-комнаты',
+            users: room.users
         }
 
     } catch (error) {

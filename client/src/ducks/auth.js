@@ -2,7 +2,7 @@ import { appName } from '../config'
 import { Record } from 'immutable'
 import { put, call, all, takeEvery } from 'redux-saga/effects'
 import { reset } from 'redux-form'
-import { USER_CONNECT_ROOM_SUCCESS } from './rooms'
+import { USER_CONNECT_ROOM_SUCCESS, CLOSE_ROOM_SUCCESS } from './rooms'
 import { createSelector } from 'reselect'
 
 
@@ -72,6 +72,10 @@ export default function reducer(state = new ReducerRecord(), action) {
         case USER_CONNECT_ROOM_SUCCESS:
             return state
                 .updateIn(['user', 'rooms'], rooms => rooms.concat(payload.roomId))
+
+        case CLOSE_ROOM_SUCCESS:
+            return state
+                .updateIn(['user', 'rooms'], rooms => rooms.filter(id => id != payload.roomId))
 
         default:
             return state

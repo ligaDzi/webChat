@@ -68,11 +68,18 @@ exports.init = (app, dirName, server) => {
                 
                 
                 //********************** CLOSE ROOM ************************** */
-                socket.on(`close-room-${roomId}`, (roomId) => {
-                    console.log('socket.rooms', io.sockets.adapter.rooms)
-                    socket.leave(roomId)
-                    console.log('LEAVE')
-                    console.log('socket.rooms', io.sockets.adapter.rooms)
+                socket.on(`close-room-${roomId}`, async (closeRoomId = roomId) => {
+
+                    const userId = allClients[socket.id]
+                    const dataClose = await disconnectUserRoom(userId, closeRoomId)
+
+                    if (dataClose.users) {
+                        socket.leave(closeRoomId)
+                        io.in(closeRoomId).emit(`user-${closeRoomId}`, { users: dataClose.users })
+                    } else {
+                        console.error(`Error: ${dataMes.message}`)
+                    }
+
                 })
                 //************************************************************ */
                 

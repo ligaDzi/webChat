@@ -108,6 +108,9 @@ export default function reducer(state = new ReducerRecord(), action) {
             return state
                 .set('loading', false)
                 .set('error', error)
+        
+        case CLOSE_ROOM_ERROR:
+            return state.set('error', error)
 
         default:
             return state
@@ -383,7 +386,12 @@ const closeRoomSaga = function * (action) {
 
         const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
 
-        socket.emit(`close-room-${roomId}`)       
+        socket.emit(`close-room-${roomId}`)  
+        
+        yield put({
+            type: CLOSE_ROOM_SUCCESS,
+            payload: { roomId }
+        })
         
     } catch (error) {
         yield put({
