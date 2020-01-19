@@ -15,12 +15,12 @@ const AuthPage = ({ user, error, signUp, signIn }) => {
     const handleSignIn = ({ email, password }) => signIn(email, password)
     const handleSignUp = ({ name, email, password }) => signUp(name, email, password)
     
-    const errTxt = error && `Error: ${error}`
+    if (error) {
+        console.error(`Error: ${error}`)
+    }
 
     return (
-        <div>
-            <h2>AuthPage</h2>
-            <p style={{color: 'red'}}>{ errTxt }</p>            
+        <div className='container'>           
             <Route  path='/auth/login' exact>
                 <SignInForm onSubmit={ handleSignIn } />
             </Route>            

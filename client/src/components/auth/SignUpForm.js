@@ -7,14 +7,20 @@ import ErrorField from '../common/ErrorField'
 
 const SignUpForm = ({ handleSubmit }) => {
     return (
-        <div>
+        <div className='row'>
             <h2>Registaration</h2>
-            <form onSubmit={ handleSubmit }>
-                <Field name='name' component={ErrorField} />
-                <Field name='email' component={ErrorField} />
-                <Field name='password' type='passowrd' component={ErrorField} />
+            <form className='col s12' onSubmit={ handleSubmit }>
+                <div className='row'>
+                    <Field name='name' id='name' className="validate" htmlFor="name" type='text' component={ErrorField} />
+                </div>
+                <div className="row">
+                    <Field name='email' id='email' className="validate" htmlFor="email" type='email' component={ErrorField} />
+                </div>
+                <div className='row'>
+                    <Field name='password' id='password' className="validate" htmlFor="password" type='password' component={ErrorField} />
+                </div>
                 <div>
-                    <input type='submit' value='Send' />
+                    <input className='btn blue lighten-2 btn-marg' type='submit' value='Registaration' />
                 </div>
             </form>
         </div>

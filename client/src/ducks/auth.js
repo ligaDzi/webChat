@@ -2,11 +2,19 @@ import { appName } from '../config'
 import { Record } from 'immutable'
 import { put, call, all, takeEvery } from 'redux-saga/effects'
 import { reset } from 'redux-form'
+import { USER_CONNECT_ROOM_SUCCESS } from './rooms'
+import { createSelector } from 'reselect'
 
 
 /**
  * Constants
  */
+export const UserRedcord = Record({
+    id: null,
+    name: null,
+    email: null,
+    rooms: []
+})
 export const ReducerRecord = Record({
     user: null,
     error: null,
@@ -45,7 +53,7 @@ export default function reducer(state = new ReducerRecord(), action) {
         case SIGN_UP_SUCCESS:
             return state
                 .set('loading', false)
-                .set('user', payload.user)
+                .set('user', new UserRedcord(payload.user))
                 .set('error', null)
 
         case AUTOENTER_ERROR:
@@ -61,6 +69,10 @@ export default function reducer(state = new ReducerRecord(), action) {
         case SIGN_OUT_SUCCESS:
             return new ReducerRecord({})
 
+        case USER_CONNECT_ROOM_SUCCESS:
+            return state
+                .updateIn(['user', 'rooms'], rooms => rooms.concat(payload.roomId))
+
         default:
             return state
     }
@@ -70,6 +82,8 @@ export default function reducer(state = new ReducerRecord(), action) {
 /**
  * Selectors
  */
+export const stateSelector = state => state[moduleName]
+export const roomsSelector = createSelector(stateSelector, state => state.user.rooms)
 
  
 /**

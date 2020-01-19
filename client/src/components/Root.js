@@ -12,8 +12,6 @@ const Root = ({ user, autoEnterSite }) => {
 
     const isAuthenticated = !!user
 
-    console.log('isAuthenticated', isAuthenticated)
-
     const routes = useRoutes(isAuthenticated)
     return (
         <Router>

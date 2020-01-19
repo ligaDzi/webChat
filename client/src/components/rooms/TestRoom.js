@@ -19,7 +19,7 @@ const TestRoom = ({ user }) => {
             socket.open()	
 
             socket.on("connect", () => {
-            		console.log("Connect")
+            	console.log("Connect")
             })
             socket.on("disconnect", () => {
                 console.log('Discconect')
