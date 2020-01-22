@@ -1,12 +1,29 @@
 import { appName } from '../config'
 import { Record, OrderedMap } from 'immutable'
-import { put, call, take, fork, all, takeEvery } from 'redux-saga/effects'
-import { eventChannel } from 'redux-saga'
+import { put, call, take, fork, all, takeEvery, cancel } from 'redux-saga/effects'
+import { eventChannel, END } from 'redux-saga'
 import { reset } from 'redux-form'
 import { createSelector } from 'reselect'
 import SocketSingleton from '../utils/socketSingleton'
 import { arrToMap, mapToArr } from '../utils/helpers'
 import { moduleName as authModuleName } from './auth'
+
+// import io from 'socket.io-client'
+// import { socketServerURL } from '../config'
+// const socket = io(socketServerURL)
+// socket.on("coonect", () => {
+//     console.log("Socket Connect")
+// })
+// socket.on("reconnect", () => {
+//     console.log("Socket Reconnect")
+// })
+// socket.on("discoonect", () => {
+//     console.log("Socket Disconnect")
+// })
+
+import SocketClient from '../utils/SocketClient'
+const socket = new SocketClient()
+socket.connect()
 
 
 /**
@@ -184,8 +201,12 @@ export function sendMessage(user, roomId, message) {
  */
 const eventSocket = (socket, eventName) => eventChannel(emit => {
 	const handler = data => emit(data)
-	socket.on(eventName, handler)
-	return () => socket.off(eventName, handler)
+    socket.on(eventName, handler)
+    
+	return () => {
+        socket.off(eventName, handler)
+        emit(END)
+    }
 })
 
 const getAllRoomListnerSaga = function * ({ socket }) {
@@ -201,6 +222,7 @@ const getAllRoomListnerSaga = function * ({ socket }) {
                     type: FETCH_ROOMS_SUCCESS,
                     payload: { rooms }
                 })
+                yield call([roomsChanel, roomsChanel.close])
             } else {
                 throw(error)
             }
@@ -211,6 +233,7 @@ const getAllRoomListnerSaga = function * ({ socket }) {
             error
         })        
     } finally {
+        console.log('END')
         yield call([roomsChanel, roomsChanel.close])
     }
 }
@@ -245,7 +268,8 @@ const newRoomListnerSaga = function * ({ socket }) {
 
 const fetchAllRoomsSaga = function * (action) {
     try {
-        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        window.socket = socket
         
         const roomsTask = yield fork(getAllRoomListnerSaga, { socket })
         const newRoomTask = yield fork(newRoomListnerSaga, { socket })
@@ -265,7 +289,7 @@ const addRoomSaga = function * (action) {
     try {
         const { roomName } = action.payload
 
-        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
         socket.emit('newRoom', roomName)
 
     } catch (error) {
@@ -276,9 +300,15 @@ const addRoomSaga = function * (action) {
     }
 }
 
+
+
+
+let roomsListnersEvent = {}
+
 const userListnerSaga = function * ({ socket, roomId }) {
+
+    const userChanel = yield call(eventSocket, socket, `user-${roomId}`)
     try {
-        const userChanel = yield call(eventSocket, socket, `user-${roomId}`)
 
         while (true) {
             const { users, error } = yield take(userChanel)
@@ -298,12 +328,15 @@ const userListnerSaga = function * ({ socket, roomId }) {
             type: UPDATE_USER_ROOM_ERROR,
             error
         })        
-    }	
+    } finally {
+        yield call([userChanel, userChanel.close])
+    }
 }
 
 const messageListnerSaga = function * ({ socket, roomId }) {
+
+    const messageChanel = yield call(eventSocket, socket, `message-${roomId}`)
     try {
-        const messageChanel = yield call(eventSocket, socket, `message-${roomId}`)
 
         while (true) {
             const { message, error } = yield take(messageChanel)
@@ -325,16 +358,19 @@ const messageListnerSaga = function * ({ socket, roomId }) {
             type: ADD_MESSAGE_ERROR,
             error
         })        
+    } finally {
+        yield call([messageChanel, messageChanel.close])
     }
 }
 
 const allMessageRoomListnerSaga = function * ({ socket, roomId }) {
+
+    const allMesRoomChanel = yield call(eventSocket, socket, `getAllMesRoom-${roomId}`)
     try {
-        const allMesRoomChanel = yield call(eventSocket, socket, `getAllMesRoom-${roomId}`)
 
         while (true) {
             const { messages, error } = yield take(allMesRoomChanel)
-            
+
             if (messages) {
                 yield put({
                     type: FETCH_MESSAGE_ROOM_SUCCESS,
@@ -350,29 +386,39 @@ const allMessageRoomListnerSaga = function * ({ socket, roomId }) {
             type: FETCH_MESSAGE_ROOM_ERROR,
             error
         })
+    } finally {
+        yield call([allMesRoomChanel, allMesRoomChanel.close])
     }
 }
 
 
 const connectUserRoomSaga = function * (action) {
+
     try {
         const { userId, roomId } = action.payload
     
-        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
-    
-        socket.emit('join', userId, roomId)
-    
-        const allMesRoomTask = yield fork(allMessageRoomListnerSaga, { socket, roomId })
-        const messageTask = yield fork(messageListnerSaga, { socket, roomId })
-        const userTask = yield fork(userListnerSaga, { socket, roomId })
-    
+        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+
+        if (!roomsListnersEvent[roomId])  roomsListnersEvent[roomId] = {}
+        
+        if (!roomsListnersEvent[roomId].allMesRoomTask) {
+            const allMesRoomTask = yield fork(allMessageRoomListnerSaga, { socket, roomId })
+            roomsListnersEvent[roomId].allMesRoomTask = allMesRoomTask
+
+            const messageTask = yield fork(messageListnerSaga, { socket, roomId })
+            roomsListnersEvent[roomId].messageTask = messageTask
+
+            const userTask = yield fork(userListnerSaga, { socket, roomId })
+            roomsListnersEvent[roomId].userTask = userTask
+        }
+
         yield put({
             type: USER_CONNECT_ROOM_SUCCESS,
             payload: { roomId }
         })
         
     } catch (error) { 
-        yield call([SocketSingleton, SocketSingleton.disconnectSocket])       
+        // yield call([SocketSingleton, SocketSingleton.disconnectSocket])       
         yield put({
             type: USER_CONNECT_ROOM_ERROR,
             error
@@ -384,9 +430,16 @@ const closeRoomSaga = function * (action) {
     try {
         const { roomId } = action.payload
 
-        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket]) 
+        
+        socket.emit(`close-room-${roomId}`, { closeRoomId: roomId }) 
+        
+        yield cancel(roomsListnersEvent[roomId].allMesRoomTask)
+        yield cancel(roomsListnersEvent[roomId].userTask)
+        yield cancel(roomsListnersEvent[roomId].messageTask)
+        if (roomsListnersEvent[roomId]) delete roomsListnersEvent[roomId]        
 
-        socket.emit(`close-room-${roomId}`)  
+        // yield call([SocketSingleton, SocketSingleton.disconnectSocket]) 
         
         yield put({
             type: CLOSE_ROOM_SUCCESS,
@@ -405,7 +458,7 @@ const sendMessageSaga = function * (action) {
     try {
         const { user, roomId, message } = action.payload
 
-        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
 
         socket.emit(`message-${roomId}`, { user, message })
 

@@ -1,0 +1,32 @@
+body
+    overflow: hidden
+
+.MuiTypography-body1
+    height: 60vh
+    overflow: hidden
+    &:nth-child(even)
+        background-color: #ebfeeb
+    &:nth-child(odd)
+        background-color: #ebfefc
+
+.MuiBox-root
+    height: 100%
+    padding: 24px 0 24px 24px          !important
+    & > div
+        overflow: auto
+        height: 100%
+
+
+.MuiTabs-flexContainer 
+    & div  
+        display: flex
+        & p
+            margin: 0
+        & button
+            padding: 15px
+            outline:none   
+            color: inherit
+            background: none
+            border: none
+            &:hover
+                color: #3ae374         !important

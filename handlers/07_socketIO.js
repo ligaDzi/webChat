@@ -38,7 +38,7 @@ exports.init = (app, dirName, server) => {
         })
 
         // ПРИСОЕДИНИТЬСЯ К КОМНАТЕ
-        socket.on('join', async (userId, roomId) => {
+        socket.on('join', async ({ userId, roomId }) => {
 
             socket.join(roomId)
             console.log('Join to room - ', roomId)
@@ -68,16 +68,20 @@ exports.init = (app, dirName, server) => {
                 
                 
                 //********************** CLOSE ROOM ************************** */
-                socket.on(`close-room-${roomId}`, async (closeRoomId = roomId) => {
-
+                socket.on(`close-room-${roomId}`, async ({ closeRoomId }) => {
+                    
                     const userId = allClients[socket.id]
                     const dataClose = await disconnectUserRoom(userId, closeRoomId)
-
+                    
                     if (dataClose.users) {
                         socket.leave(closeRoomId)
+
+                        socket.removeAllListeners(`close-room-${roomId}`, () => console.log('Close Room'))
+                        socket.removeAllListeners(`message-${roomId}`, () => console.log('Close Message'))
+
                         io.in(closeRoomId).emit(`user-${closeRoomId}`, { users: dataClose.users })
-                    } else {
-                        console.error(`Error: ${dataMes.message}`)
+                    } else if (dataClose.error) {
+                        console.error(`Error: ${dataClose.message}`)
                     }
 
                 })

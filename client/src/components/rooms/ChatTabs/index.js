@@ -13,18 +13,19 @@ import './style.sass'
 
 const ChatTabs = ({ user, rooms, closeRoom, sendMessage }) => {
     
-    const tab = useRef(null)
+    const tab = useRef(null)    
     const [tabInstance, setTabInstance] = useState(null)
     const [activeRoomId, setActiveRoomId] = useState(null)
     console.log('rooms', rooms)
+    console.log('activeRoomId', activeRoomId)
 
     useEffect(() => {
         if (!activeRoomId && rooms.length > 0) setActiveRoomId(rooms[0].id)
     }, [rooms])
 
     const handleCloseRoom = (roomId) => {
-        tabInstance && tabInstance.destroy()
         closeRoom(roomId)
+        activeRoomId && tabInstance && tabInstance.select(activeRoomId)
     }
 
     const handleSendMessage = ({ message }) => {
@@ -46,8 +47,8 @@ const ChatTabs = ({ user, rooms, closeRoom, sendMessage }) => {
     const renderLinkTab = () => (
         rooms.map(r => (
             <li className="tab col s3" key={r.id}>
-                <a className='tab-link__header' href={`#${r.id}`} onClick={() => setActiveRoomId(r.id)}>
-                    <p>{ r.name }</p>
+                <a className='tab-link__header' href={`#${r.id}`}>
+                    <p onClick={() => setActiveRoomId(r.id)}>{ r.name }</p>
                     <button onClick={() => handleCloseRoom(r.id)}>
                         X
                     </button>
@@ -68,11 +69,10 @@ const ChatTabs = ({ user, rooms, closeRoom, sendMessage }) => {
     
     useEffect(() => {
         const option = {
-            duration: 500,
-            swipeable: true
+            duration: 300
         }
 
-        if (rooms.length > 0 ) {
+        if (rooms.length > 0) {
             setTabInstance(window.M.Tabs.init(tab.current, option))
         }
     }, [rooms])

@@ -1,7 +1,7 @@
 import React from 'react'
 
 import RoomList from './RoomList'
-import ChatTabs from './ChatTabs'
+import ChatTabs from './ChatTabsMU'
 
 import './style.sass'
 
