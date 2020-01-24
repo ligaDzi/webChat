@@ -5,7 +5,6 @@ import { socketServerURL } from '../config'
 const SocketSingleton = {
     socket: io(socketServerURL, { autoConnect: false }),
     connectSocket() {  
-        this.socket = io(socketServerURL)
         return new Promise((resolve, reject) => {
             try {
                 if (!this.socket.connected) {

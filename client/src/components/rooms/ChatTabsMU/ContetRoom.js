@@ -1,11 +1,28 @@
 import React, { useEffect, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
+import { withStyles, makeStyles } from '@material-ui/core/styles'
+import Tooltip from '@material-ui/core/Tooltip'
 import randomColor from 'randomcolor'
+import { getRandomId } from '../../../utils/helpers'
 
-const colorArr = randomColor({    
+import { AbsoluteBlock, ListsSE, ListItemSE, EndListItemSE, LITooltipSE, MessageColor } from './styles'
+
+let colorArr = randomColor({    
    luminosity: 'dark',
-   count: 1000
+   count: 100
 })
+
+
+const HtmlTooltip = withStyles(theme => ({
+    tooltip: {
+        backgroundColor: '#f5f5f9',
+        color: 'rgba(0, 0, 0, 0.87)',
+        maxWidth: 600,
+        fontSize: theme.typography.pxToRem(12),
+        border: '1px solid #dadde9',
+    },
+}))(Tooltip)
+
 
 const ContetRoom = props => {
     const { room } = props
@@ -18,7 +35,7 @@ const ContetRoom = props => {
         const arrUsers = room.users.map((user, i) => ( 
             {
                 ...user, 
-                color: (i+1) <= colorArr.length ? colorArr[i] : randomColor({ luminosity: 'dark' })
+                color: getColorForIndex(i)
             }
         ))
         setUsers(arrUsers)
@@ -27,6 +44,16 @@ const ContetRoom = props => {
     useEffect(() => {
         listMes.current.scrollTop = listMes.current.scrollHeight
     }, [room.messages])
+
+
+    const getColorForIndex = index => {
+
+        if ((index + 1) > colorArr.length) {
+            const colors = randomColor({ luminosity: 'dark', count: 100 })
+            colorArr = colorArr.concat(colors)
+        }
+        return colorArr[index]
+    }
 
     const getUserColor = name => {
         let color = null
@@ -39,18 +66,52 @@ const ContetRoom = props => {
         return color
     }
 
-    const messages = room.messages.length > 0 
-        ? room.messages.map((mes, i) => (
-            <p key={mes.id} style={{color: getUserColor(mes.username)}}>
-                {`${mes.username}: ${mes.text}`}
-            </p>
-        )) 
-        : null
 
-    return (
-        <div ref={listMes}>
-            { messages }
+
+    const renderMessageList = messageList => {
+        if (messageList.length <= 0)
+            return null
+        else 
+            return messageList.map((mes, i) => (
+                <MessageColor key={getRandomId()} color={getUserColor(mes.username)}>
+                    <h5>{mes.username}:</h5>
+                    <div>{mes.text}</div>
+                </MessageColor>
+            ))
+    }
+
+    const renderListTooltip = users => (        
+        <div>
+            {users.map(user => 
+                <LITooltipSE key={getRandomId()} color={user.color}>
+                    {user.name}
+                </LITooltipSE>)}
         </div>
+    )
+  
+    return (
+        <>
+            <div ref={listMes}>
+                { renderMessageList(room.messages) }
+            </div>
+            <AbsoluteBlock>
+                <ListsSE>
+                    {users.slice(0, 42).map((user, i) => {
+                        if (i <= 40)
+                            return <ListItemSE key={getRandomId()} color={user.color}>{user.name}</ListItemSE>
+                        else 
+                            return (
+                                <HtmlTooltip
+                                    title={renderListTooltip(users)}
+                                    placement="left-end"
+                                >
+                                    <EndListItemSE>...{users.length}</EndListItemSE>                        
+                                </HtmlTooltip>
+                            )
+                    })}
+                </ListsSE>
+            </AbsoluteBlock>
+        </>
     )
 }
 

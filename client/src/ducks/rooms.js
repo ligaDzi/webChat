@@ -8,22 +8,6 @@ import SocketSingleton from '../utils/socketSingleton'
 import { arrToMap, mapToArr } from '../utils/helpers'
 import { moduleName as authModuleName } from './auth'
 
-// import io from 'socket.io-client'
-// import { socketServerURL } from '../config'
-// const socket = io(socketServerURL)
-// socket.on("coonect", () => {
-//     console.log("Socket Connect")
-// })
-// socket.on("reconnect", () => {
-//     console.log("Socket Reconnect")
-// })
-// socket.on("discoonect", () => {
-//     console.log("Socket Disconnect")
-// })
-
-import SocketClient from '../utils/SocketClient'
-const socket = new SocketClient()
-socket.connect()
 
 
 /**
@@ -38,6 +22,8 @@ export const ReducerRecord = Record({
 export const RoomRecord = Record({
     id: null,
     name: null,
+    isActive: false,
+    newMesSize: 0,
     users: [],
     messages: []
 })
@@ -71,6 +57,8 @@ export const ADD_MESSAGE_ERROR = `${prefix}/ADD_MESSAGE_ERROR`
 export const UPDATE_USER_ROOM_SUCCESS = `${prefix}/UPDATE_USER_ROOM_SUCCESS`
 export const UPDATE_USER_ROOM_ERROR = `${prefix}/UPDATE_USER_ROOM_ERROR`
 
+export const CHANGE_ACTIVE_ROOM = `${prefix}/CHANGE_ACTIVE_ROOM`
+
 
 /**
  * Reducer
@@ -100,7 +88,7 @@ export default function reducer(state = new ReducerRecord(), action) {
         case USER_CONNECT_ROOM_SUCCESS:
             return state
                 .set('loading', false)
-                // .setIn(['rooms', payload.uid], new RoomRecord(payload))
+                .setIn(['rooms', payload.roomId, 'newMesSize'], 0)
                 .set('error', null)
 
         case UPDATE_USER_ROOM_SUCCESS:
@@ -111,6 +99,7 @@ export default function reducer(state = new ReducerRecord(), action) {
         case ADD_MESSAGE_SUCCESS:
             return state
                 .updateIn(['rooms', payload.roomId, 'messages'], messages => [...messages, payload.message])
+                .updateIn(['rooms', payload.roomId, 'newMesSize'], newMesSize => (newMesSize + 1))
                 .set('error', null)
 
         case FETCH_MESSAGE_ROOM_SUCCESS:
@@ -128,6 +117,10 @@ export default function reducer(state = new ReducerRecord(), action) {
         
         case CLOSE_ROOM_ERROR:
             return state.set('error', error)
+
+        case CHANGE_ACTIVE_ROOM:
+            return state
+                .setIn(['rooms', payload.roomId, 'newMesSize'], 0)
 
         default:
             return state
@@ -194,6 +187,13 @@ export function sendMessage(user, roomId, message) {
 	}
 }
 
+export function changeActiveRoom(roomId) {
+    return {
+        type: CHANGE_ACTIVE_ROOM,
+        payload: { roomId }
+    }
+}
+
 
 
 /**
@@ -233,7 +233,6 @@ const getAllRoomListnerSaga = function * ({ socket }) {
             error
         })        
     } finally {
-        console.log('END')
         yield call([roomsChanel, roomsChanel.close])
     }
 }
@@ -268,7 +267,7 @@ const newRoomListnerSaga = function * ({ socket }) {
 
 const fetchAllRoomsSaga = function * (action) {
     try {
-        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
         window.socket = socket
         
         const roomsTask = yield fork(getAllRoomListnerSaga, { socket })
@@ -289,7 +288,8 @@ const addRoomSaga = function * (action) {
     try {
         const { roomName } = action.payload
 
-        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+
         socket.emit('newRoom', roomName)
 
     } catch (error) {
@@ -396,8 +396,10 @@ const connectUserRoomSaga = function * (action) {
 
     try {
         const { userId, roomId } = action.payload
+
+        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
     
-        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        socket.emit('join', { userId, roomId })
 
         if (!roomsListnersEvent[roomId])  roomsListnersEvent[roomId] = {}
         
@@ -418,7 +420,6 @@ const connectUserRoomSaga = function * (action) {
         })
         
     } catch (error) { 
-        // yield call([SocketSingleton, SocketSingleton.disconnectSocket])       
         yield put({
             type: USER_CONNECT_ROOM_ERROR,
             error
@@ -430,16 +431,14 @@ const closeRoomSaga = function * (action) {
     try {
         const { roomId } = action.payload
 
-        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket]) 
-        
+        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+
         socket.emit(`close-room-${roomId}`, { closeRoomId: roomId }) 
-        
+
         yield cancel(roomsListnersEvent[roomId].allMesRoomTask)
         yield cancel(roomsListnersEvent[roomId].userTask)
         yield cancel(roomsListnersEvent[roomId].messageTask)
         if (roomsListnersEvent[roomId]) delete roomsListnersEvent[roomId]        
-
-        // yield call([SocketSingleton, SocketSingleton.disconnectSocket]) 
         
         yield put({
             type: CLOSE_ROOM_SUCCESS,
@@ -458,7 +457,7 @@ const sendMessageSaga = function * (action) {
     try {
         const { user, roomId, message } = action.payload
 
-        // const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
+        const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
 
         socket.emit(`message-${roomId}`, { user, message })
 

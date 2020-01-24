@@ -6,7 +6,7 @@ import AppBar from '@material-ui/core/AppBar'
 import Tabs from '@material-ui/core/Tabs'
 
 import { moduleName as authModuleName } from '../../../ducks/auth'
-import { moduleName as roomModuleName, selectedRoomSelector, closeRoom, sendMessage } from '../../../ducks/rooms'
+import { moduleName as roomModuleName, selectedRoomSelector, closeRoom, sendMessage, changeActiveRoom } from '../../../ducks/rooms'
 
 import TabPanel from './TabPanel'
 import TabLink from './TabLink'
@@ -33,24 +33,38 @@ const useStyles = makeStyles(theme => ({
 
 
 function ChatTabs(props) {
-  const { user, rooms, closeRoom, sendMessage } = props  
+  const { user, rooms, closeRoom, sendMessage, changeActiveRoom } = props  
   const classes = useStyles()
   const theme = useTheme()
   const [value, setValue] = useState(0)
 
-  console.log('rooms', rooms)
-  console.log('value', value)
-
   const handleCloseRoom = (roomId, indexRoom) => {
     closeRoom(roomId)
-    if (value === indexRoom && value > 0) setValue(value => (value - 1))
+    
+    if (value !== indexRoom && indexRoom < value && value > 0) setValue(value => (value - 1))
+    else if (value === indexRoom && value > 0) setValue(value => (value - 1))
+    
   }
+
   const handleSendMessage = ({ message }) => {
     sendMessage(user, rooms[value].id, message)
   }
 
   const handleChange = (event, newValue) => {
     setValue(newValue)
+  }
+
+  const handleChangeActiveRoom = (roomId) => {
+    changeActiveRoom(roomId)
+  }
+
+  const setActiveRoom = (index, roomId) => {
+    if (value === index) {
+      changeActiveRoom(roomId)
+      return true
+    } else {
+      return false
+    }
   }
 
   const showTab = () => (
@@ -69,6 +83,9 @@ function ChatTabs(props) {
                   key={room.id} 
                   label={room.name}               
                   handleClose={() => handleCloseRoom(room.id, i)}
+                  handleChangeActiveRoom={() => handleChangeActiveRoom(room.id)}
+                  isActive={setActiveRoom(i, room.id)}
+                  newMesSize={room.newMesSize}
                   {...a11yProps(i)} 
                 />
               ))}
@@ -99,7 +116,8 @@ ChatTabs.propTypes = {
   user: PropTypes.object,
   rooms: PropTypes.array,
   closeRoom: PropTypes.func.isRequired,
-  sendMessage: PropTypes.func.isRequired
+  sendMessage: PropTypes.func.isRequired,
+  changeActiveRoom: PropTypes.func.isRequired
 }
 
 export default connect(state => ({
@@ -108,5 +126,6 @@ export default connect(state => ({
 
 }), {
   closeRoom,
-  sendMessage
+  sendMessage,
+  changeActiveRoom
 })(ChatTabs)

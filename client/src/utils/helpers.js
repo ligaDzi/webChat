@@ -12,3 +12,5 @@ export const mapToArr = map => {
 
     return map.valueSeq().toArray();
 }
+
+export const getRandomId = () => `${Math.random().toString()}${Date.now().toString()}`

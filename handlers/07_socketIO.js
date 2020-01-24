@@ -76,6 +76,11 @@ exports.init = (app, dirName, server) => {
                     if (dataClose.users) {
                         socket.leave(closeRoomId)
 
+                        // НАДО ОБЯЗАТЕЛЬНО ОЧИЩАТЬ SOCKET ОТ НЕНУЖНЫХ ПРОСЛУШИВАНИЙ
+                        // ИНАЧЕ ОНИ БУДУТ ДУБЛИРОВАТЬСЯ 
+                        // И НАПРИМЕР ПРИ ОДНОМ EMIT(`close-room-${roomId}`) НА КЛИЕНТЕ, 
+                        // НА СЕРВЕРЕ БУДЕТ ПРОИСХОДИТЬ ДВА СОБЫТИЯ `close-room-${roomId}`
+                        // (ИЛИ ТРИ, ... СМОТРЯ СКОЛЬКО РАЗ ПОЛЬЗОВАТЕЛЬ ВХОДИЛ/ВЫХОДИЛ ИЗ КОМНАТЫ)
                         socket.removeAllListeners(`close-room-${roomId}`, () => console.log('Close Room'))
                         socket.removeAllListeners(`message-${roomId}`, () => console.log('Close Message'))
 

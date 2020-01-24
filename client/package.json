@@ -11,6 +11,7 @@
   "proxy": "http://localhost:5000",
   "dependencies": {
     "@material-ui/core": "^4.8.3",
+    "@material-ui/icons": "^4.5.1",
     "email-validator": "^2.0.4",
     "immutable": "^4.0.0-rc.12",
     "materialize-css": "^1.0.0-rc.2",

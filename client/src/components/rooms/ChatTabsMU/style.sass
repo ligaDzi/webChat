@@ -10,9 +10,11 @@ body
         background-color: #ebfefc
 
 .MuiBox-root
+    position: relative
     height: 100%
     padding: 24px 0 24px 24px          !important
-    & > div
+    & > div:nth-child(1)
+        position: relative
         overflow: auto
         height: 100%
 
@@ -20,6 +22,7 @@ body
 .MuiTabs-flexContainer 
     & div  
         display: flex
+        align-items: center
         & p
             margin: 0
         & button
