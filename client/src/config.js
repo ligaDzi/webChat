@@ -1,4 +1,4 @@
 
 
 export const appName = 'webSocket'
-export const socketServerURL = 'http://localhost:80'
+export const socketServerURL = 'https://webchatsocketio2.herokuapp.com'

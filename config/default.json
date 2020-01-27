@@ -3,5 +3,5 @@
     "jwtSecret": "my secret in websocket",
     "appSecret": "ssecret136573cd2359al",
     "mongoUri": "mongodb+srv://alex:LIGAGA@cluster0-agvp9.mongodb.net/app?retryWrites=true&w=majority",
-    "baseUrl": "http://localhost:80"
+    "baseUrl": "https://webchatsocketio2.herokuapp.com/"
 }
