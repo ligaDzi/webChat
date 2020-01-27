@@ -30,7 +30,6 @@ app
     .use(router.allowedMethods())
 
 
-
 const PORT = process.env.PORT || config.get('port')
 server.listen(PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`))
 
