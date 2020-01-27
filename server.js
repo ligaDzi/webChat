@@ -10,6 +10,8 @@ const path = require('path')
 const fs = require('fs')
 
 
+// process.env.NODE_ENV = 'production'
+
 // Здесь подключаються модули из папки handlers.
 const handlers = fs.readdirSync(path.join(__dirname, 'handlers')).sort()
 handlers.forEach(handler => require('./handlers/' + handler).init(app, dirName = __dirname, server))
@@ -29,6 +31,7 @@ app
     .use(router.routes())
     .use(router.allowedMethods())
 
+    
 
 const PORT = process.env.PORT || config.get('port')
 server.listen(PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`))
