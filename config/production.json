@@ -2,6 +2,6 @@
     "port": 5000,
     "jwtSecret": "my secret in websocket",
     "appSecret": "ssecret136573cd2359al",
-    "mongoUri": "mongodb+srv://alex:LIGAGA@cluster0-k5ct5.azure.mongodb.net/app?retryWrites=true&w=majority",
+    "mongoUri": "mongodb+srv://alex:LIGAGA@cluster0-agvp9.mongodb.net/app?retryWrites=true&w=majority",
     "baseUrl": "http://localhost:5000"
 }
