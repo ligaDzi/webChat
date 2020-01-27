@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { makeStyles, useTheme } from '@material-ui/core/styles'
@@ -6,7 +6,7 @@ import AppBar from '@material-ui/core/AppBar'
 import Tabs from '@material-ui/core/Tabs'
 
 import { moduleName as authModuleName } from '../../../ducks/auth'
-import { moduleName as roomModuleName, selectedRoomSelector, closeRoom, sendMessage, changeActiveRoom } from '../../../ducks/rooms'
+import { selectedRoomSelector, closeRoom, sendMessage, changeActiveRoom } from '../../../ducks/rooms'
 
 import TabPanel from './TabPanel'
 import TabLink from './TabLink'

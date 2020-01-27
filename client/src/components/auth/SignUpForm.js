@@ -28,6 +28,7 @@ const SignUpForm = ({ handleSubmit }) => {
 }
 
 SignUpForm.propTypes = {
+    //from Component
     handleSubmit: PropTypes.func.isRequired
 }
 

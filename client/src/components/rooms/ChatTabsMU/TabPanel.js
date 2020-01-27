@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React from 'react'
 import PropTypes from 'prop-types'
 
 import Typography from '@material-ui/core/Typography'
@@ -23,6 +23,7 @@ function TabPanel(props) {
 }
 
 TabPanel.propTypes = {
+    //from Component
     children: PropTypes.node,
     index: PropTypes.any.isRequired,
     value: PropTypes.any.isRequired,

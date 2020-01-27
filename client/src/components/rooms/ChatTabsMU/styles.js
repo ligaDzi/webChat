@@ -20,8 +20,8 @@ export const ListsSE = styled.ul`
 export const ListItemSE = styled.li`
     font-size: 8px;
     cursor: default;
-    transition: all 0.1s;
-    color: ${props => props.color || 'inherit'};    
+    transition: font-size 0.1s;
+    color: ${props => props.color || 'inherit'}; 
 
     &:hover {
         font-size: 14px;  
@@ -46,6 +46,7 @@ export const LITooltipSE = styled.span`
 export const MessageColor = styled.div`
     display: flex;
     padding-bottom: 15px;
+    padding-right: 200px;
     color: ${props => props.color || 'inherit'};
 
     & h5 {

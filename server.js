@@ -20,14 +20,8 @@ const Router = require('koa-router')
 const router = new Router()
 
 const authRouter = require('./routers/auth')
-const roomRouter = require('./routers/rooms')
-const userRouter = require('./routers/user')
-const messageRouter = require('./routers/message')
 
 router.use('/api/auth', authRouter.routes(), authRouter.allowedMethods())
-router.use('/api/room', roomRouter.routes(), roomRouter.allowedMethods())
-router.use('/api/user', userRouter.routes(), userRouter.allowedMethods())
-router.use('/api/message', messageRouter.routes(), messageRouter.allowedMethods())
 
 
 

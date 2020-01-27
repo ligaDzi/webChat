@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import PropTypes from 'prop-types'
 import { reduxForm, Field } from 'redux-form'
 import emailValidator from 'email-validator'
@@ -9,11 +9,6 @@ import ErrorField from '../common/ErrorField'
 import './style.sass'
 
 const SignInForm = ({ handleSubmit }) => {
-
-    useEffect(() => {
-        // Очищение инпутов от предыдущих вводов
-        window.M.updateTextFields()
-    }, [])
     
     return (
         <div className='row'>
@@ -35,6 +30,7 @@ const SignInForm = ({ handleSubmit }) => {
 }
 
 SignInForm.propTypes = {
+    //form Component
     handleSubmit: PropTypes.func.isRequired
 }
 

@@ -4,6 +4,7 @@ import { Provider } from 'react-redux'
 
 import Root from './components/Root'
 
+
 function App() {
     return (
         <Provider store = { store }>

@@ -9,8 +9,6 @@ const rootReducer = createRootReducer()
 const enhancer = applyMiddleware(sagaMiddleware, logger)
 const store = createStore(rootReducer, enhancer)
 
-window.store = store
-
 sagaMiddleware.run(rootSaga)
 
 export default store

@@ -4,8 +4,7 @@ import { reduxForm, Field } from 'redux-form'
 
 import ErrorField from '../../common/ErrorField'
 
-const SendMessageForm = props => {
-    const { handleSubmit } = props
+const SendMessageForm = ({ handleSubmit }) => {
 
     return (
         <form className='col s12' onSubmit={ handleSubmit }>
@@ -20,7 +19,6 @@ const SendMessageForm = props => {
                     component={ErrorField} 
                 />
             </div>
-
         </form>
     )
 }

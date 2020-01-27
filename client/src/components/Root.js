@@ -8,7 +8,7 @@ const Root = ({ user, autoEnterSite }) => {
     
     useEffect(() => {
         autoEnterSite()
-    }, [])
+    }, [autoEnterSite])
 
     const isAuthenticated = !!user
 

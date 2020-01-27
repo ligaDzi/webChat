@@ -28,6 +28,7 @@ export const RoomRecord = Record({
     messages: []
 })
 
+
 export const moduleName = 'room'
 const prefix = `${appName}/${moduleName}`
 
@@ -42,6 +43,9 @@ export const FETCH_ROOMS_ERROR = `${prefix}/FETCH_ROOMS_ERROR`
 export const FETCH_MESSAGE_ROOM_SUCCESS = `${prefix}/FETCH_MESSAGE_ROOM_SUCCESS`
 export const FETCH_MESSAGE_ROOM_ERROR = `${prefix}/FETCH_MESSAGE_ROOM_ERROR`
 
+export const FETCH_USERS_ROOM_SUCCESS = `${prefix}/FETCH_USERS_ROOM_SUCCESS`
+export const FETCH_USERS_ROOM_ERROR = `${prefix}/FETCH_USERS_ROOM_ERROR`
+
 export const USER_CONNECT_ROOM_REQUEST = `${prefix}/USER_CONNECT_ROOM_REQUEST`
 export const USER_CONNECT_ROOM_SUCCESS = `${prefix}/USER_CONNECT_ROOM_SUCCESS`
 export const USER_CONNECT_ROOM_ERROR = `${prefix}/USER_CONNECT_ROOM_ERROR`
@@ -54,8 +58,11 @@ export const ADD_MESSAGE_REQUEST = `${prefix}/ADD_MESSAGE_REQUEST`
 export const ADD_MESSAGE_SUCCESS = `${prefix}/ADD_MESSAGE_SUCCESS`
 export const ADD_MESSAGE_ERROR = `${prefix}/ADD_MESSAGE_ERROR`
 
-export const UPDATE_USER_ROOM_SUCCESS = `${prefix}/UPDATE_USER_ROOM_SUCCESS`
-export const UPDATE_USER_ROOM_ERROR = `${prefix}/UPDATE_USER_ROOM_ERROR`
+export const ADD_USER_ROOM_SUCCESS = `${prefix}/ADD_USER_ROOM_SUCCESS`
+export const ADD_USER_ROOM_ERROR = `${prefix}/ADD_USER_ROOM_ERROR`
+
+export const DEL_USER_ROOM_SUCCESS = `${prefix}/DEL_USER_ROOM_SUCCESS`
+export const DEL_USER_ROOM_ERROR = `${prefix}/DEL_USER_ROOM_ERROR`
 
 export const CHANGE_ACTIVE_ROOM = `${prefix}/CHANGE_ACTIVE_ROOM`
 
@@ -91,10 +98,20 @@ export default function reducer(state = new ReducerRecord(), action) {
                 .setIn(['rooms', payload.roomId, 'newMesSize'], 0)
                 .set('error', null)
 
-        case UPDATE_USER_ROOM_SUCCESS:
+        case ADD_USER_ROOM_SUCCESS:
             return state
-                .setIn(['rooms', payload.roomId, 'users'], payload.users)
+                .updateIn(['rooms', payload.roomId, 'users'], users => [...users, payload.user])
                 .set('error', null)
+
+        case DEL_USER_ROOM_SUCCESS:
+            return state
+                .updateIn(['rooms', payload.roomId, 'users'], users => users.filter(u => u.id !== payload.userId))
+                .set('error', null)
+
+        case CLOSE_ROOM_SUCCESS:
+            return state
+                .updateIn(['rooms', payload.roomId, 'users'], users => [])
+
 
         case ADD_MESSAGE_SUCCESS:
             return state
@@ -106,11 +123,18 @@ export default function reducer(state = new ReducerRecord(), action) {
             return state
                 .setIn(['rooms', payload.roomId, 'messages'], payload.messages)
 
+        case FETCH_USERS_ROOM_SUCCESS:
+            return state
+                .setIn(['rooms', payload.roomId, 'users'], payload.users)
+
         case FETCH_ROOMS_ERROR:
         case ADD_ROOM_ERROR:
         case ADD_MESSAGE_ERROR:
         case USER_CONNECT_ROOM_ERROR:
-        case UPDATE_USER_ROOM_ERROR:
+        case ADD_USER_ROOM_ERROR:
+        case DEL_USER_ROOM_ERROR:
+        case FETCH_USERS_ROOM_ERROR:
+        case FETCH_MESSAGE_ROOM_ERROR:
             return state
                 .set('loading', false)
                 .set('error', error)
@@ -268,10 +292,9 @@ const newRoomListnerSaga = function * ({ socket }) {
 const fetchAllRoomsSaga = function * (action) {
     try {
         const socket = yield call([SocketSingleton, SocketSingleton.connectSocket])
-        window.socket = socket
         
-        const roomsTask = yield fork(getAllRoomListnerSaga, { socket })
-        const newRoomTask = yield fork(newRoomListnerSaga, { socket })
+        yield fork(getAllRoomListnerSaga, { socket })
+        yield fork(newRoomListnerSaga, { socket })
 
         const { userId } = action.payload
         socket.emit('allRoom', { userId })
@@ -292,6 +315,8 @@ const addRoomSaga = function * (action) {
 
         socket.emit('newRoom', roomName)
 
+        yield put(reset('addroom'))
+
     } catch (error) {
         yield put({
             type: ADD_ROOM_ERROR,
@@ -311,12 +336,12 @@ const userListnerSaga = function * ({ socket, roomId }) {
     try {
 
         while (true) {
-            const { users, error } = yield take(userChanel)
+            const { user, error } = yield take(userChanel)
 
-            if (users) {
+            if (user) {
                 yield put({
-                    type: UPDATE_USER_ROOM_SUCCESS,
-                    payload: { roomId, users }
+                    type: ADD_USER_ROOM_SUCCESS,
+                    payload: { roomId, user }
                 })
             } else {
                 throw(error)
@@ -325,7 +350,7 @@ const userListnerSaga = function * ({ socket, roomId }) {
         
     } catch (error) {    
         yield put({
-            type: UPDATE_USER_ROOM_ERROR,
+            type: ADD_USER_ROOM_ERROR,
             error
         })        
     } finally {
@@ -391,6 +416,60 @@ const allMessageRoomListnerSaga = function * ({ socket, roomId }) {
     }
 }
 
+const allUserRoomListnerSaga = function * ({ socket, roomId }) {
+    const allUserRoomChanel = yield call(eventSocket, socket, `getAllUserRoom-${roomId}`)
+
+    try {
+        while (true) {
+            const { users, error } = yield take(allUserRoomChanel)
+
+            if (users) {
+                yield put({
+                    type: FETCH_USERS_ROOM_SUCCESS,
+                    payload: { roomId, users }
+                })
+            } else {
+                throw(error)
+            }
+        }
+        
+    } catch (error) {
+        yield put({
+            type: FETCH_USERS_ROOM_ERROR,
+            error
+        })        
+    } finally {
+        yield call([allUserRoomChanel, allUserRoomChanel.close])
+    }
+}
+
+const leaveUserRoomLstnerSaga = function * ({ socket, roomId }) {
+    const leaveUserRoomChanel = yield call(eventSocket, socket, `leaveUser=${roomId}`)
+
+    try {
+        while (true) {
+            const { userId, error } = yield take(leaveUserRoomChanel)
+
+            if (userId) {
+                yield put({
+                    type: DEL_USER_ROOM_SUCCESS,
+                    payload: { roomId, userId }
+                })
+            } else {
+                throw(error)
+            }
+        }
+        
+    } catch (error) {
+        yield put({
+            type: DEL_USER_ROOM_ERROR,
+            error
+        })        
+    } finally {
+        yield call([leaveUserRoomChanel, leaveUserRoomChanel.close])
+    }
+}
+
 
 const connectUserRoomSaga = function * (action) {
 
@@ -404,6 +483,9 @@ const connectUserRoomSaga = function * (action) {
         if (!roomsListnersEvent[roomId])  roomsListnersEvent[roomId] = {}
         
         if (!roomsListnersEvent[roomId].allMesRoomTask) {
+            const allUserRoomTask = yield fork(allUserRoomListnerSaga, { socket, roomId })
+            roomsListnersEvent[roomId].allUserRoomTask = allUserRoomTask
+
             const allMesRoomTask = yield fork(allMessageRoomListnerSaga, { socket, roomId })
             roomsListnersEvent[roomId].allMesRoomTask = allMesRoomTask
 
@@ -412,6 +494,9 @@ const connectUserRoomSaga = function * (action) {
 
             const userTask = yield fork(userListnerSaga, { socket, roomId })
             roomsListnersEvent[roomId].userTask = userTask
+
+            const leaveUserTask = yield fork(leaveUserRoomLstnerSaga, { socket, roomId })
+            roomsListnersEvent[roomId].leaveUserTask = leaveUserTask
         }
 
         yield put({
@@ -435,9 +520,11 @@ const closeRoomSaga = function * (action) {
 
         socket.emit(`close-room-${roomId}`, { closeRoomId: roomId }) 
 
+        yield cancel(roomsListnersEvent[roomId].allUserRoomTask)
         yield cancel(roomsListnersEvent[roomId].allMesRoomTask)
         yield cancel(roomsListnersEvent[roomId].userTask)
         yield cancel(roomsListnersEvent[roomId].messageTask)
+        yield cancel(roomsListnersEvent[roomId].leaveUserTask)
         if (roomsListnersEvent[roomId]) delete roomsListnersEvent[roomId]        
         
         yield put({

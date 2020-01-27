@@ -1,31 +1,24 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
-import { 
-    moduleName as roomModuleName, 
-    fetchAllRooms, addRoom, connectUserRoom, 
-    roomListSelector 
-} from '../../ducks/rooms'
-
+import { fetchAllRooms, addRoom, connectUserRoom, roomListSelector } from '../../ducks/rooms'
 import { moduleName as userModuleName } from '../../ducks/auth'
-import { mapToArr } from '../../utils/helpers'
 
 import RoomBtn from './RoomBtn'
+import AddRoomForm from './AddRoomForm'
 
 import './style.sass'
 
+
 const RoomList = ({ user, rooms, fetchAllRooms, addRoom, connectUserRoom }) => {
-    const [textInput, setTextInput] = useState('')
 
     useEffect(() => {
         fetchAllRooms(user.id)
-    }, [])
+    }, [fetchAllRooms, user])
 
-    const addNewRoom = ev => {
-        ev.preventDefault()
-        addRoom(textInput)
-        setTextInput('')
+    const handleAddNewRoom = ({ roomName }) => {
+        addRoom(roomName)
     }
 
     const handleConnectRoom = roomId => {
@@ -40,15 +33,7 @@ const RoomList = ({ user, rooms, fetchAllRooms, addRoom, connectUserRoom }) => {
             <nav>
                 { rooms.map(room => <RoomBtn key={room.id} room={room} handleClick={handleConnectRoom} /> ) }
             </nav>
-            <form onSubmit={ addNewRoom }>
-                <input
-                    type='text' 
-                    className='room-add'
-                    value={textInput}
-                    placeholder='Add Room'
-                    onChange={ev => setTextInput(ev.target.value)}                    
-                />
-            </form>
+            <AddRoomForm rooms={rooms} onSubmit={handleAddNewRoom} />
         </div>
     )
 }

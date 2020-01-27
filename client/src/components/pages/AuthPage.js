@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { Route } from 'react-router-dom'
@@ -33,6 +33,7 @@ const AuthPage = ({ user, error, signUp, signIn }) => {
 }
 
 AuthPage.propTypes = {
+    //from store
     user: PropTypes.object,
     error: PropTypes.string,
     signUp: PropTypes.func.isRequired,

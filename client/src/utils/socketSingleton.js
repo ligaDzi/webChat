@@ -11,13 +11,9 @@ const SocketSingleton = {
                     this.socket.open()
 
                     this.socket.on("connect", () => {
-                        console.log("Socket Connect")
                         resolve(this.socket)
                     })
 
-                    this.socket.on("disconnect", () => {
-                        console.log('Socket Discconect')
-                    })
                 } else {
                     resolve(this.socket)
                 }
@@ -29,7 +25,6 @@ const SocketSingleton = {
     },
     disconnectSocket() {
         if (this.socket.connected) {
-            console.log('this.socket', this.socket.id)
             this.socket.close()
         }
     }

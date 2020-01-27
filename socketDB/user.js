@@ -1,6 +1,5 @@
 const mongoose = require('../libs/mongoose')
 const Room = require('../models/Room')
-const User = require('../models/User')
 const { addAndDelUserInRoomValidation } = require('../utils/validation')
 
 
@@ -19,19 +18,10 @@ const connectUserRoom = async (userId, roomId) => {
         const isUser = room.users.find(id => id == userId)
 
         if (isUser) {
-            return await Room
-                .findById(roomId)
-                .populate('users')
-                .then(room => {
-                    return {
-                        message: 'Пользователь уже добавлен в чат-комнату',
-                        users: room.users.map(user => ({
-                            id: user.id,
-                            name: user.name,
-                            email: user.email
-                        }))
-                    }
-                })            
+            return {
+                message: 'Пользователь уже добавлен в чат-комнату',
+                error: new Error('The user has already been added to the chat room') 
+            }            
         } else {
     
             await room.users.push(userId)
@@ -50,8 +40,7 @@ const connectUserRoom = async (userId, roomId) => {
                         }))
                     }
                 })
-        }
-        
+        }       
 
     } catch (error) {
         return {
@@ -64,17 +53,8 @@ const connectUserRoom = async (userId, roomId) => {
 
 const disconnectUser = async (userId) => {
     try {
-        let roomArr = null
 
-        await Room
-            .find({ users: { $in: userId } }, 'id users')
-            .populate('users', 'id name email')
-            .then(rooms => {                 
-                roomArr = rooms.map(room => {
-                    room.users = room.users.filter(user => user.id != userId)
-                    return room
-                })                
-            })
+        const roomArr = await Room.find({ users: { $in: userId } }, 'id')
 
         await Room.updateMany({ users: { $in: userId } }, { $pull: { users: userId }})
         
@@ -107,8 +87,7 @@ const disconnectUserRoom = async (userId, roomId) => {
         room.save()
         
         return {
-            message: 'Пользователь удален из чат-комнаты',
-            users: room.users
+            message: 'Пользователь удален из чат-комнаты'
         }
 
     } catch (error) {

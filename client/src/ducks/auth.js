@@ -4,6 +4,7 @@ import { put, call, all, takeEvery } from 'redux-saga/effects'
 import { reset } from 'redux-form'
 import { USER_CONNECT_ROOM_SUCCESS, CLOSE_ROOM_SUCCESS } from './rooms'
 import { createSelector } from 'reselect'
+import SocketSingleton from '../utils/socketSingleton'
 
 
 /**
@@ -33,6 +34,7 @@ export const SIGN_IN_SUCCESS = `${appName}/${moduleName}/SIGN_IN_SUCCESS`
 export const SIGN_IN_ERROR = `${appName}/${moduleName}/SIGN_IN_ERROR`
 export const SIGN_OUT_REQUEST = `${appName}/${moduleName}/SIGN_OUT_REQUEST`
 export const SIGN_OUT_SUCCESS = `${appName}/${moduleName}/SIGN_OUT_SUCCESS`
+export const SIGN_OUT_ERROR = `${appName}/${moduleName}/SIGN_OUT_ERROR`
 
 
 /**
@@ -62,6 +64,7 @@ export default function reducer(state = new ReducerRecord(), action) {
 
         case SIGN_IN_ERROR:
         case SIGN_UP_ERROR:
+        case SIGN_OUT_ERROR:
             return state
                 .set('loading', false)
                 .set('error', error)
@@ -75,7 +78,7 @@ export default function reducer(state = new ReducerRecord(), action) {
 
         case CLOSE_ROOM_SUCCESS:
             return state
-                .updateIn(['user', 'rooms'], rooms => rooms.filter(id => id != payload.roomId))
+                .updateIn(['user', 'rooms'], rooms => rooms.filter(id => id !== payload.roomId))
 
         default:
             return state
@@ -123,7 +126,7 @@ export function signOut() {
 /**
  * Sagas
  */
-export const autoEnterSiteSaga = function * (action) {
+const autoEnterSiteSaga = function * (action) {
     try {        
         const response = yield fetch('/api/auth/autoenter')
         const data = yield call(
@@ -147,7 +150,7 @@ export const autoEnterSiteSaga = function * (action) {
     }
 }
 
-export const signUpSaga = function * (action) {
+const signUpSaga = function * (action) {
     try {
         const option = {
             method: 'POST',
@@ -191,7 +194,7 @@ export const signUpSaga = function * (action) {
     }    
 }
 
-export const signInSaga = function * (action) {
+const signInSaga = function * (action) {
     try {
 
         const option = {
@@ -235,8 +238,20 @@ export const signInSaga = function * (action) {
     }
 }
 
-export const signOutSaga = function * (action) {
+const signOutSaga = function * (action) {
+    try {        
+        yield fetch('/api/auth/logout') 
 
+        yield call([SocketSingleton, SocketSingleton.disconnectSocket])
+        
+        yield put({
+            type: SIGN_OUT_SUCCESS
+        }) 
+    } catch (error) {
+        yield put({
+            type: SIGN_OUT_ERROR
+        })          
+    }
 }
 
 

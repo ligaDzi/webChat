@@ -1,4 +1,4 @@
-const { Schema, model, Types } = require('../libs/mongoose')
+const { Schema, model } = require('../libs/mongoose')
 
 const userSchema = new Schema({
     name: {
@@ -18,11 +18,7 @@ const userSchema = new Schema({
         required: true,
         min: 6,
         max: 255 
-    },
-    rooms: [{ 
-        type: Types.ObjectId,
-        ref: 'Room' 
-    }]
+    }
 })
 
 module.exports = model('User', userSchema)

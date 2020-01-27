@@ -3,8 +3,7 @@ const { addRoom, getAllRooms } = require('../socketDB/room')
 const { connectUserRoom, disconnectUserRoom, disconnectUser } = require('../socketDB/user')
 const { getAllMesageOnRoom, addMessageToRoom } = require('../socketDB/message')
 
-// ЗДЕСЬ ПОДКЛЮЧАЕТСЯ SocketIO И ПЕРЕДАЕТСЯ В КОНТЕКСТ ПРИЛОЖЕНИЯ (ctx) 
-// ДЛЯ ДОСТУПА В ЛЮБОМ МЕСТЕ ПРОГРАММЫ
+// ЗДЕСЬ ПОДКЛЮЧАЕТСЯ SocketIO 
 exports.init = (app, dirName, server) => {
 
     let allClients = {}
@@ -50,8 +49,9 @@ exports.init = (app, dirName, server) => {
                 allClients[socket.id] = userId
 
                 
-                //***************** USER COME TO ROOM ************************ */                
-                io.in(roomId).emit(`user-${roomId}`, { users: data.users })
+                //***************** USER COME TO ROOM ************************ */   
+                io.to(socket.id).emit(`getAllUserRoom-${roomId}`, { users: data.users })
+                socket.to(roomId).emit(`user-${roomId}`, { user: data.users.filter(u => u.id == userId)[0] })
                 //************************************************************ */                
 
 
@@ -73,7 +73,9 @@ exports.init = (app, dirName, server) => {
                     const userId = allClients[socket.id]
                     const dataClose = await disconnectUserRoom(userId, closeRoomId)
                     
-                    if (dataClose.users) {
+                    if (dataClose.error) {
+                        console.error(`Error: ${dataClose.message}`)
+                    } else {
                         socket.leave(closeRoomId)
 
                         // НАДО ОБЯЗАТЕЛЬНО ОЧИЩАТЬ SOCKET ОТ НЕНУЖНЫХ ПРОСЛУШИВАНИЙ
@@ -84,9 +86,7 @@ exports.init = (app, dirName, server) => {
                         socket.removeAllListeners(`close-room-${roomId}`, () => console.log('Close Room'))
                         socket.removeAllListeners(`message-${roomId}`, () => console.log('Close Message'))
 
-                        io.in(closeRoomId).emit(`user-${closeRoomId}`, { users: dataClose.users })
-                    } else if (dataClose.error) {
-                        console.error(`Error: ${dataClose.message}`)
+                        socket.to(closeRoomId).emit(`leaveUser=${closeRoomId}`, { userId })
                     }
 
                 })
@@ -121,10 +121,8 @@ exports.init = (app, dirName, server) => {
 
             if (data.rooms) {
                 data.rooms.forEach(room => {
-
-                    io.in(room.id).emit(`user-${room.id}`, { users: room.users })
+                    socket.to(room.id).emit(`leaveUser=${room.id}`, { userId: allClients[socket.id] })
                 })
-                console.log('data.rooms', data.rooms)
             } else {
                 console.error(`Error: ${data.message}`)
             }
