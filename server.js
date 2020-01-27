@@ -31,6 +31,6 @@ app
 
 
 
-const PORT = config.get('port')
+const PORT = process.env.PORT || config.get('port')
 server.listen(PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`))
 
